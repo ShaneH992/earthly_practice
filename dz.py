@@ -70,25 +70,48 @@ Xiang_xing = [
 ]
 
 DATA_PACK = {
-    "Liu_chong":Liu_chong, 
-    "Liu_he": Liu_he, 
-    "Liu_hai": Liu_hai, 
-    "Liu_po": Liu_po, 
-    "Xiang_xing": Xiang_xing, 
-    "San_he": San_he
+    "六冲": Liu_chong, 
+    "六合": Liu_he, 
+    "六害": Liu_hai, 
+    "六破": Liu_po, 
+    "相刑": Xiang_xing, 
+    "三合": San_he
 }
 
 if 'initialized' not in st.session_state:
+    #1. 大关卡的随机顺序
+    #获取所有关卡的名字
     all_phase = list(DATA_PACK.keys())
+    #顺序打乱
     random.shuffle(all_phase)
+    #将打乱后的关卡顺序存入名叫"phase order"的容器里
     st.session_state.phase_order = all_phase
+    #为打关卡的顺序做索引
     st.session_state.phase_idx = 0
+
+    #2. 开始当前关卡的建立
+    #从all_phase的列表中提取第一个作为第一关
     current_phase = all_phase[0]
+    #取出问题，并将顺序打乱
     st.session_state.questions = random.sample(DATA_PACK[current_phase], len(DATA_PACK[current_phase]))
     st.session_state.submitted = False
+    #建立随机种子，让浏览器无法提示输入
     st.session_state.random_seed = random.randint(1, 9999)
+
+    #给initialized赋值，下次无需再循环网页建立过程
     st.session_state.initialized = True
+    #设置结尾选项
     st.session_state.is_finished = False
+
+def next_phase():
+    #进入下一轮，将phase索引+1
+    st.session_state.phase_idx += 1
+    if st.session_state.phase_idx >= len(st.session_state.phase_order):
+        st.session_state.is_finished = True
+    else:
+        new_p = st.session_state.phase_order[st.session_state.phase_idx]
+        st.session_state.questions = random.sample(DATA_PACK[new_p], len(DATA_PACK[new_p]))
+        st.session_state.random_seed = random.randint(1, 9999)
 
 st.set_page_config(page_title="地支练习", layout="centered")
 st.title("地支合冲")
@@ -132,20 +155,15 @@ else:
 
             for i, (u_ans, q_obj) in enumerate(zip(user_answer, st.session_state.questions)):
                 if u_ans == q_obj["target"]:
-                    st.write(f"第{i+1}题： ✅️ 正确")
+                    st.write(f"第{i+1}题：✅️ 正确")
                 else:
                     all_correct = False
-                    st.error(f"第{i+1}题错误，{q_obj['prompt']}正确答案为：{q_obj["target"]}")
+                    st.error(f"第{i+1}题：❌️ 错误，你的回答：{u_ans if u_ans else '空'}")
+                    st.caption(f"{q_obj['prompt']}正确答案为：{q_obj["target"]}")
             
             if all_correct:
                 st.success("本轮全部正确")
-                if st.button("进入下一轮"):
-                    st.session_state.phase_idx += 1
-                    if st.session_state.phase_idx >= len(st.session_state.phase_order):
-                        st.session_state.is_finished = True
-                    else:
-                        new_p = st.session_state.phase_order[st.session_state.phase_idx]
-                        st.session_state.questions = random.sample(DATA_PACK[new_p], len(DATA_PACK[new_p]))
+                if st.button("进入下一轮", on_click=next_phase):
                     st.rerun()
             else:
                 st.warning("请修改后再次提交")
