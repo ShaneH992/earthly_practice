@@ -111,6 +111,7 @@ def next_phase():
         st.session_state.is_finished = True
     #如果没有结束，则将字典取出进行题目排列
     else:
+        #这是确定一个新的phase，因为之前index已经+1变到了下一轮
         new_p = st.session_state.phase_order[st.session_state.phase_idx]
         st.session_state.questions = random.sample(DATA_PACK[new_p], len(DATA_PACK[new_p]))
         st.session_state.random_seed = random.randint(1, 9999)
@@ -122,6 +123,9 @@ if st.session_state.is_finished:
     st.balloons()
     st.success("已完成")
     if st.button("重新开始"):
+        #st keys()是为了获取当前所有的标签名，如phase order, phase idx, questions等
+        #转换成一个列表
+        #然后删除
         for key in list(st.session_state.keys()): del st.session_state[key]
         st.rerun()
 else:
@@ -129,7 +133,7 @@ else:
 
     col_a, col_b = st.columns([3,1])
     col_a.subheader(f"当前阶段：{current_phase_name}")
-    col_b.write(f"进度：{st.session_state.phase_idx + 1} / {len(st.session_state.phase_order)}")
+    col_b.markdown(f"### 进度：{st.session_state.phase_idx + 1} / {len(st.session_state.phase_order)}")
 
     with st.form(key = f"form_{current_phase_name}_{st.session_state.phase_idx}"):
         st.info("填写完毕后，点击提交批改")
@@ -141,10 +145,12 @@ else:
 
             ans = a_col.text_input(
                 "请输入",
+                #用key来保障输入的唯一性，否则streamlit会报错
                 key = f"input_{i}_{st.session_state.random_seed}",
                 label_visibility = "collapsed",
                 placeholder="在此输入"
             )
+            #strip()用来去除不小心打的空格
             user_answer.append(ans.strip())
         
         submit_button = st.form_submit_button(label="提交")
