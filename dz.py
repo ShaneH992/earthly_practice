@@ -1,3 +1,7 @@
+#version v2.2
+#修改在输入时因为字符顺序而导致的批改错误
+
+
 import streamlit as st
 import random
 
