@@ -163,7 +163,8 @@ else:
             st.write("### 结果: ")
 
             for i, (u_ans, q_obj) in enumerate(zip(user_answer, st.session_state.questions)):
-                if u_ans == q_obj["target"]:
+                #v2_2版本修改，对输入的数据做set处理，不用再在意输入的顺序
+                if sorted(list(u_ans)) == sorted(list(q_obj["target"])):
                     st.write(f"第{i+1}题：✅️ 正确")
                 else:
                     all_correct = False
