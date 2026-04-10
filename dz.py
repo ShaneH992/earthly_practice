@@ -1,86 +1,41 @@
 #version v2.2
 #修改在输入时因为字符顺序而导致的批改错误
-
+#version v3
+#将地支数据库使用外在csv文件作为导入使用
 
 import streamlit as st
 import random
+import pandas as pd
+from collections import defaultdict
 
-Liu_he_map = {
-    "子丑": "土", "土": "子丑",
-    "寅亥": "木", "木": "寅亥",
-    "卯戌": "火", "火": "卯戌",
-    "辰酉": "金", "金": "辰酉",
-    "巳申": "水", "水": "巳申",
-    "午未": "土火", "土火": "午未"
-}
+def load_dizhi_data(filepath:str) -> dict:
+    df = pd.read_csv(filepath, encoding="utf-8-sig")
+    pack = defaultdict(list)
+    no_reverse = {"相刑", "三合", "六合"}
 
-Liu_he = [{"prompt": k, "target": v} for k, v in Liu_he_map.items()]
+    for _, row in df.iterrows():
+        p, t, rel = row["prompt"], row["target"], row["relation_type"]
+        pack[rel].append({"prompt": p, "target": t})
+        if p != t and rel not in no_reverse:
+            pack[rel].append({"prompt":t, "target":p})
+        
+    return dict(pack)
 
-Liu_chong_map = {
-    "子": "午", "午": "子",
-    "丑": "未", "未": "丑",
-    "寅": "申", "申": "寅",
-    "卯": "酉", "酉": "卯",
-    "辰": "戌", "戌": "辰",
-    "巳": "亥", "亥": "巳"
-}
+DATA_PACK = load_dizhi_data("dz_data.csv")
 
-Liu_chong = [{"prompt": k, "target": v} for k, v in Liu_chong_map.items()]
+def next_phase():
+    #进入下一轮，将phase索引+1
+    st.session_state.phase_idx += 1
+    #确定结束点
+    if st.session_state.phase_idx >= len(st.session_state.phase_order):
+        st.session_state.is_finished = True
+    #如果没有结束，则将字典取出进行题目排列
+    else:
+        #这是确定一个新的phase，因为之前index已经+1变到了下一轮
+        new_p = st.session_state.phase_order[st.session_state.phase_idx]
+        st.session_state.questions = random.sample(DATA_PACK[new_p], len(DATA_PACK[new_p]))
+        st.session_state.random_seed = random.randint(1, 9999)
 
-Liu_hai_map = {
-    "卯":"辰","辰":"卯",
-    "寅":"巳","巳":"寅",
-    "丑":"午","午":"丑",
-    "子":"未","未":"子",
-    "亥":"申","申":"亥",
-    "戌":"酉","酉":"戌"
-}
-
-Liu_hai = [{"prompt":k, "target":v} for k, v in Liu_hai_map.items()]
-
-Liu_po_map = {
-    "子": "酉","酉": "子",
-    "午": "卯","卯": "午",
-    "巳": "申","申": "巳",
-    "寅": "亥","亥": "寅",
-    "辰": "丑","丑": "辰",
-    "戌": "未","未": "戌"
-}
-
-Liu_po = [{"prompt":k, "target":v} for k, v in Liu_po_map.items()]
-
-San_he_map = {
-    "水": "申子辰", "申子辰": "水",
-    "木": "亥卯未", "亥卯未": "木",
-    "火": "寅午戌", "寅午戌": "火",
-    "金": "巳酉丑", "巳酉丑": "金"
-}
-
-San_he = [{"prompt":k, "target":v} for k, v in San_he_map.items()]
-
-Xiang_xing = [
-    {"prompt": "子", "target": "卯"},
-    {"prompt": "卯", "target": "子"},
-    {"prompt": "寅", "target": "申巳"},
-    {"prompt": "巳", "target": "寅申"},
-    {"prompt": "申", "target": "寅巳"},
-    {"prompt": "丑", "target": "戌未"},
-    {"prompt": "戌", "target": "丑未"},
-    {"prompt": "未", "target": "丑戌"},
-    {"prompt": "辰", "target": "辰"},
-    {"prompt": "午", "target": "午"},
-    {"prompt": "酉", "target": "酉"},
-    {"prompt": "亥", "target": "亥"}
-]
-
-DATA_PACK = {
-    "六冲": Liu_chong, 
-    "六合": Liu_he, 
-    "六害": Liu_hai, 
-    "六破": Liu_po, 
-    "相刑": Xiang_xing, 
-    "三合": San_he
-}
 
 if 'initialized' not in st.session_state:
     #1. 大关卡的随机顺序
@@ -106,19 +61,6 @@ if 'initialized' not in st.session_state:
     st.session_state.initialized = True
     #设置结尾选项
     st.session_state.is_finished = False
-
-def next_phase():
-    #进入下一轮，将phase索引+1
-    st.session_state.phase_idx += 1
-    #确定结束点
-    if st.session_state.phase_idx >= len(st.session_state.phase_order):
-        st.session_state.is_finished = True
-    #如果没有结束，则将字典取出进行题目排列
-    else:
-        #这是确定一个新的phase，因为之前index已经+1变到了下一轮
-        new_p = st.session_state.phase_order[st.session_state.phase_idx]
-        st.session_state.questions = random.sample(DATA_PACK[new_p], len(DATA_PACK[new_p]))
-        st.session_state.random_seed = random.randint(1, 9999)
 
 st.set_page_config(page_title="地支练习", layout="centered")
 st.title("地支合冲")
