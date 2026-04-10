@@ -2,12 +2,12 @@ import streamlit as st
 import random
 
 Liu_he_map = {
-    "子丑": "合土", "合土": "子丑",
-    "寅亥": "合木", "合木": "寅亥",
-    "卯戌": "合火", "合火": "卯戌",
-    "辰酉": "合金", "合金": "辰酉",
-    "巳申": "合水", "合水": "巳申",
-    "午未": "合土火", "合土火": "午未"
+    "子丑": "土", "土": "子丑",
+    "寅亥": "木", "木": "寅亥",
+    "卯戌": "火", "火": "卯戌",
+    "辰酉": "金", "金": "辰酉",
+    "巳申": "水", "水": "巳申",
+    "午未": "土火", "土火": "午未"
 }
 
 Liu_he = [{"prompt": k, "target": v} for k, v in Liu_he_map.items()]
@@ -46,10 +46,10 @@ Liu_po_map = {
 Liu_po = [{"prompt":k, "target":v} for k, v in Liu_po_map.items()]
 
 San_he_map = {
-    "水局": "申子辰", "申子辰": "水局",
-    "木局": "亥卯未", "亥卯未": "木局",
-    "火局": "寅午戌", "寅午戌": "火局",
-    "金局": "巳酉丑", "巳酉丑": "金局"
+    "水": "申子辰", "申子辰": "水",
+    "木": "亥卯未", "亥卯未": "木",
+    "火": "寅午戌", "寅午戌": "火",
+    "金": "巳酉丑", "巳酉丑": "金"
 }
 
 San_he = [{"prompt":k, "target":v} for k, v in San_he_map.items()]
@@ -57,11 +57,11 @@ San_he = [{"prompt":k, "target":v} for k, v in San_he_map.items()]
 Xiang_xing = [
     {"prompt": "子", "target": "卯"},
     {"prompt": "卯", "target": "子"},
-    {"prompt": "寅", "target": "巳申"},
-    {"prompt": "巳", "target": "申寅"},
+    {"prompt": "寅", "target": "申巳"},
+    {"prompt": "巳", "target": "寅申"},
     {"prompt": "申", "target": "寅巳"},
     {"prompt": "丑", "target": "戌未"},
-    {"prompt": "戌", "target": "未丑"},
+    {"prompt": "戌", "target": "丑未"},
     {"prompt": "未", "target": "丑戌"},
     {"prompt": "辰", "target": "辰"},
     {"prompt": "午", "target": "午"},
@@ -106,8 +106,10 @@ if 'initialized' not in st.session_state:
 def next_phase():
     #进入下一轮，将phase索引+1
     st.session_state.phase_idx += 1
+    #确定结束点
     if st.session_state.phase_idx >= len(st.session_state.phase_order):
         st.session_state.is_finished = True
+    #如果没有结束，则将字典取出进行题目排列
     else:
         new_p = st.session_state.phase_order[st.session_state.phase_idx]
         st.session_state.questions = random.sample(DATA_PACK[new_p], len(DATA_PACK[new_p]))
@@ -130,6 +132,7 @@ else:
     col_b.write(f"进度：{st.session_state.phase_idx + 1} / {len(st.session_state.phase_order)}")
 
     with st.form(key = f"form_{current_phase_name}_{st.session_state.phase_idx}"):
+        st.info("填写完毕后，点击提交批改")
         user_answer = []
 
         for i, q in enumerate(st.session_state.questions):
@@ -146,10 +149,10 @@ else:
         
         submit_button = st.form_submit_button(label="提交")
 
-        if submit_button:
-            st.session_state.submitted = True
-            all_correct = True
-
+    if submit_button or st.session_state.get("all_passed", False):
+        all_correct = True
+        results_container = st.container()
+        with results_container:
             st.markdown("---")
             st.write("### 结果: ")
 
