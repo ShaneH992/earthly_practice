@@ -8,10 +8,11 @@ import random
 import pandas as pd
 from collections import defaultdict
 
+#-> dict表示该函数会返回一个字典，但是如果最后返回的不是字典，程序也不会报错
 def load_dizhi_data(filepath:str) -> dict:
     df = pd.read_csv(filepath, encoding="utf-8-sig")
     pack = defaultdict(list)
-    no_reverse = {"相刑", "三合", "六合"}
+    no_reverse = {"十灵日", "五行长生", "乾造十神亲", "十二长生"}
 
     for _, row in df.iterrows():
         p, t, rel = row["prompt"], row["target"], row["relation_type"]
@@ -77,7 +78,7 @@ if st.session_state.is_finished:
 else:
     current_phase_name = st.session_state.phase_order[st.session_state.phase_idx]
 
-    col_a, col_b = st.columns([3,1])
+    col_a, col_b = st.columns([2,1])
     col_a.subheader(f"当前阶段：{current_phase_name}")
     col_b.markdown(f"### 进度：{st.session_state.phase_idx + 1} / {len(st.session_state.phase_order)}")
 
