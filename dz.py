@@ -10,6 +10,7 @@ from collections import defaultdict
 NO_REVERSE = {"十灵日", "五行长生", "乾造十神亲", "十二长生"}
 
 #csv读取函数
+@st.cache_data
 def load_csv_file(filepath: str) -> dict:
     df = pd.read_csv(filepath, encoding="utf-8-sig")
     #使用defaultdict来创建字典类，defaultdict(list)默认值为[]
