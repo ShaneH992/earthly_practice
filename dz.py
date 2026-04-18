@@ -1,4 +1,6 @@
+#v3，使用外部csv文件导入
 #v3.1，代码优化
+#v3.2，数据读取从.iterrows()到.groupby()
 
 import streamlit as st
 import random
@@ -16,11 +18,18 @@ def load_csv_file(filepath: str) -> dict:
     #使用defaultdict来创建字典类，defaultdict(list)默认值为[]
     #访问不存在的键时，自动创建默认值，而不是抛出KeyError
     pack = defaultdict(list)
-    for _, row in df.iterrows():
-        p, t, rel = row["prompt"], row["target"], row["relation_type"]
-        pack[rel].append({"prompt": p, "target": t})
-        if p != t and rel not in NO_REVERSE:
-            pack[rel].append({"prompt": t, "target": p})
+    #v3.2迭代读取函数
+    for rel, group in df.groupby("relation_type"):
+        rows = group[["prompt", "target"]].to_dict("records")
+        pack[rel].extend(rows)
+
+        if rel not in NO_REVERSE:
+            reversed_row = [
+                {"prompt": r["target"], "target": r["prompt"]}
+                for r in rows
+                if r["prompt"] != r["target"]
+            ]
+            pack[rel].extend(reversed_row)
     #再将defaultdict转换为普通字典，这样防止以后有额外错误信息录入
     return dict(pack)
 
